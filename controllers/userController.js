@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { Auth } = require("../models/models");
+const { Role } = require("../models/models");
 const { Article } = require("../models/models");
 
 const generateJWT = (id, email, role) => {
@@ -11,9 +12,9 @@ const generateJWT = (id, email, role) => {
 
 const register = async function (req, res) {
   try {
-    const { email, password } = req.body;
+    const { email, password, name, surname, age } = req.body;
 
-    if (!email || !password) {
+    if (!email || !password || !name || !surname || !age) {
       return res.json({
         status: false,
         message: "Введите данные.",
@@ -31,9 +32,16 @@ const register = async function (req, res) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await Auth.create({ email, password: hashedPassword });
+    const user = await Auth.create({
+      email,
+      password: hashedPassword,
+      name,
+      surname,
+      age,
+      roleId: 2,
+    });
 
-    const token = generateJWT(user.id, user.email, user.role);
+    const token = generateJWT(user.id, user.email, user.roleId);
 
     res.json({
       status: true,
@@ -75,7 +83,7 @@ const login = async function (req, res) {
       });
     }
 
-    const token = generateJWT(user.id, user.email, user.role);
+    const token = generateJWT(user.id, user.email, user.roleId);
 
     res.json({
       status: true,
@@ -90,7 +98,7 @@ const login = async function (req, res) {
 
 const check = async function (req, res) {
   try {
-    const token = generateJWT(req.user.id, req.user.email, req.user.role);
+    const token = generateJWT(req.user.id, req.user.email, req.user.roleId);
 
     res.json({
       status: true,
@@ -102,22 +110,21 @@ const check = async function (req, res) {
   }
 };
 
-const writers = async function (req, res) {
+const writer = async function (req, res) {
   try {
-    const users = await Auth.findAll({
-      where: {},
+    const user = await Auth.findAll({
+      where: { id: req.user.id },
       include: [
         {
           model: Article,
-          where: {},
         },
       ],
     });
 
     res.json({
       status: true,
-      message: "Список всех пользователей",
-      data: users,
+      message: "Данные пользователя готовы.",
+      data: user,
     });
   } catch (e) {
     res.status(500).json(e);
@@ -141,6 +148,6 @@ module.exports = {
   register,
   login,
   check,
-  writers,
+  writer,
   deleteWriter,
 };

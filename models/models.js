@@ -3,6 +3,20 @@ const { sequelize } = require("../db");
 
 // =============================================================
 
+const Role = sequelize.define("roles", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+  },
+  name: {
+    type: DataTypes.STRING,
+    require: true,
+  },
+});
+
+// =============================================================
+
 const Auth = sequelize.define("users", {
   id: {
     type: DataTypes.INTEGER,
@@ -18,9 +32,17 @@ const Auth = sequelize.define("users", {
     type: DataTypes.STRING,
     require: true,
   },
-  role: {
+  name: {
     type: DataTypes.STRING,
-    defaultValue: "USER",
+    require: true,
+  },
+  surname: {
+    type: DataTypes.STRING,
+    require: true,
+  },
+  age: {
+    type: DataTypes.STRING,
+    require: true,
   },
 });
 
@@ -36,7 +58,11 @@ const Article = sequelize.define("articles", {
     type: DataTypes.STRING,
     require: true,
   },
-  description: {
+  short_description: {
+    type: DataTypes.STRING,
+    require: true,
+  },
+  article: {
     type: DataTypes.STRING,
     require: true,
   },
@@ -44,12 +70,16 @@ const Article = sequelize.define("articles", {
 
 // =============================================================
 
+Role.hasMany(Auth);
+Auth.belongsTo(Role);
+
 Auth.hasMany(Article, { onDelete: "cascade" });
 Article.belongsTo(Auth);
 
 // =============================================================
 
 module.exports = {
+  Role,
   Auth,
   Article,
 };

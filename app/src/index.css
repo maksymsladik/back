@@ -33,6 +33,7 @@ h1 {
   text-align: center;
 }
 
+textarea,
 input {
   margin-bottom: 10px;
   padding: 10px;

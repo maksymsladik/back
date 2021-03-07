@@ -1,9 +1,9 @@
 import Request from "./Request";
 
 class RequestApi {
-  static get(url, token) {
+  static get(path, token) {
     return new Request()
-      .setUrl(url)
+      .setUrl(path)
       .setMethod("GET")
       .setHeaders(token)
       .setOptions()
@@ -14,6 +14,16 @@ class RequestApi {
     return new Request()
       .setUrl(path)
       .setMethod("POST")
+      .setHeaders(token)
+      .setBody(body)
+      .setOptions()
+      .send();
+  }
+
+  static update(path, body, token) {
+    return new Request()
+      .setUrl(path)
+      .setMethod("PATCH")
       .setHeaders(token)
       .setBody(body)
       .setOptions()

@@ -5,14 +5,22 @@ const {
   register,
   login,
   check,
-  writers,
+  writer,
   deleteWriter,
 } = require("../controllers/userController");
 
 router.post("/register", register);
+
 router.post("/login", login);
+
 router.get("/check", passport.authenticate("jwt", { session: false }), check);
-router.get("/writers", writers);
-router.delete("/writers/:id", deleteWriter);
+
+router.get("/writer", passport.authenticate("jwt", { session: false }), writer);
+
+router.delete(
+  "/writers/:id",
+  passport.authenticate("jwt", { session: false }),
+  deleteWriter
+);
 
 module.exports = router;

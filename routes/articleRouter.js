@@ -3,7 +3,6 @@ const passport = require("passport");
 const router = new Router();
 const {
   getArticles,
-  getWriterArticles,
   getArticle,
   createArticle,
   updateArticle,
@@ -12,12 +11,6 @@ const {
 } = require("../controllers/articleController");
 
 router.get("/articles", getArticles);
-
-router.get(
-  "/my-articles",
-  passport.authenticate("jwt", { session: false }),
-  getWriterArticles
-);
 
 router.get(
   "/articles/:id",

@@ -4,16 +4,6 @@ const getArticles = async function (req, res) {
   try {
     const articles = await Article.findAll();
 
-    res.status(200).json(articles);
-  } catch (e) {
-    res.status(500).json(e);
-  }
-};
-
-const getWriterArticles = async function (req, res) {
-  try {
-    const articles = await Article.findAll({ where: { userId: req.user.id } });
-
     res.json(articles);
   } catch (e) {
     res.status(500).json(e);
@@ -22,6 +12,9 @@ const getWriterArticles = async function (req, res) {
 
 const getArticle = async function (req, res) {
   try {
+    const article = await Article.findAll({ where: { id: req.params.id } });
+
+    res.json(article);
   } catch (e) {
     res.status(500).json(e);
   }
@@ -30,14 +23,13 @@ const getArticle = async function (req, res) {
 const createArticle = async function (req, res) {
   try {
     const { id } = req.user;
-    const { title, description } = req.body;
+    const { title, short_description, article } = req.body;
 
-    const article = await Article.create({ title, description, userId: id });
+    await Article.create({ title, short_description, article, userId: id });
 
     res.json({
       status: true,
       message: "Вы успешно создали статью",
-      data: article,
     });
   } catch (e) {
     res.status(500).json(e);
@@ -46,6 +38,19 @@ const createArticle = async function (req, res) {
 
 const updateArticle = async function (req, res) {
   try {
+    const { title, short_description, article } = req.body;
+
+    await Article.update(
+      { title, short_description, article },
+      {
+        where: { userId: req.user.id, id: req.params.id },
+      }
+    );
+
+    res.json({
+      status: true,
+      message: "Вы успешно обновили статью",
+    });
   } catch (e) {
     res.status(500).json(e);
   }
@@ -79,7 +84,6 @@ const deleteArticles = async function (req, res) {
 
 module.exports = {
   getArticles,
-  getWriterArticles,
   getArticle,
   createArticle,
   updateArticle,

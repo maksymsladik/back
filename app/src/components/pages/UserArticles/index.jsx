@@ -1,107 +1,191 @@
-import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import ArticlesList from "../../module/ArticlesList";
+import React, { useState, useEffect, useContext } from "react";
+import List from "./components/List";
+import Form from "./components/Form";
+import MyProfile from "./components/MyProfile";
 import RequestApi from "../../lib/RequestApi";
+import { Context } from "../../context";
 
 function UserArticles() {
-  const { register, handleSubmit, errors } = useForm();
+  const { setAuthorized } = useContext(Context);
   const [message, setMessage] = useState("");
   const [state, setState] = useState([]);
-  const [updatePage, setUpdstePage] = useState(false);
+  const [data, setData] = useState({
+    id: "",
+    email: "",
+    roleId: "",
+    name: "",
+    surname: "",
+    age: "",
+  });
+  const [editArticle, setEditArticle] = useState([]);
 
   useEffect(() => {
+    onGetDataWriter();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const onSetActive = (id) => {
+    const newState = state.map((item) => {
+      if (item.id === id) {
+        return {
+          ...item,
+          action: !item.action,
+        };
+      }
+      return item;
+    });
+
+    setState(newState);
+  };
+  /* get all data */
+  const onGetDataWriter = () => {
+    setState([]);
     RequestApi.get(
-      "/app/my-articles",
+      "/auth/writer",
       JSON.parse(localStorage.getItem("userData")).userToken
     )
-      .then((res) => setState(res))
+      .then((res) => {
+        const { id, email, roleId, name, surname, age } = res.data[0];
+        setData({ ...data, id, email, roleId, name, surname, age });
+        if (res.data[0].articles) {
+          for (var i in res.data[0].articles) {
+            const articleAction = res.data[0].articles[i];
+            setState((prev) => [...prev, { ...articleAction, action: false }]);
+          }
+        }
+      })
       .catch((e) => console.log(e));
-  }, [updatePage]);
-
-  const onSubmit = (data, e) => {
+  };
+  /* create article */
+  const onCreateArticle = (data, e) => {
     RequestApi.post(
       "/app/my-articles",
       data,
       JSON.parse(localStorage.getItem("userData")).userToken
     )
       .then((res) => {
-        if (!res.status) return setMessage("Что-то пошло не так.");
-
         setMessage(res.message);
-        setTimeout(() => setMessage(""), 1500);
+        setTimeout(() => setMessage(""), 1000);
+        setEditArticle([]);
         e.target.reset();
-        setUpdstePage(!updatePage);
+        onGetDataWriter();
       })
       .catch((e) => console.log(e));
   };
-
-  const deleteThisArticle = (id) => {
+  /* get article for edit form */
+  const editThisArticle = (id) => {
+    RequestApi.get(
+      `/app/articles/${id}`,
+      JSON.parse(localStorage.getItem("userData")).userToken
+    )
+      .then((res) => {
+        setEditArticle(res[0]);
+      })
+      .catch((e) => console.log(e));
+  };
+  /* new field for edit article */
+  const onChangeFieldsEditArticle = (e) => {
+    const value = e.target.value;
+    const name = e.target.name;
+    setEditArticle({ ...editArticle, [name]: value });
+  };
+  /* edit article */
+  const updateThisArticle = (id) => {
+    RequestApi.update(
+      `/app/articles/${id}`,
+      {
+        title: editArticle.title,
+        short_description: editArticle.short_description,
+        article: editArticle.article,
+      },
+      JSON.parse(localStorage.getItem("userData")).userToken
+    )
+      .then((res) => {
+        setMessage(res.message);
+        setTimeout(() => setMessage(""), 1000);
+        setEditArticle([]);
+        onGetDataWriter();
+      })
+      .catch((e) => console.log(e));
+  };
+  /* close edit form */
+  const closeThisArticle = () => {
+    setEditArticle([]);
+  };
+  /* delete my profile */
+  const removeMyProfile = (id) => {
+    const confirm = window.confirm(
+      "Вы действительно хотите удалить свой профиль?"
+    );
+    if (!confirm) return false;
+    RequestApi.deleteThis(
+      `/auth/writers/${id}`,
+      JSON.parse(localStorage.getItem("userData")).userToken
+    )
+      .then((res) => {
+        setAuthorized("");
+        localStorage.removeItem("userData");
+      })
+      .catch((e) => console.log(e));
+  };
+  /* delete one article */
+  const removeThisArticle = (id) => {
     RequestApi.deleteThis(
       `/app/my-articles/${id}`,
       JSON.parse(localStorage.getItem("userData")).userToken
     )
       .then((res) => {
         setMessage(res.message);
-        setTimeout(() => setMessage(""), 1500);
-        setUpdstePage(!updatePage);
+        setTimeout(() => setMessage(""), 1000);
+        setEditArticle([]);
+        onGetDataWriter();
       })
       .catch((e) => console.log(e));
   };
-
-  const deleteTheseArticles = () => {
+  /* delete all article */
+  const removeTheseArticles = () => {
     RequestApi.deleteThese(
       `/app/my-articles`,
       JSON.parse(localStorage.getItem("userData")).userToken
     )
       .then((res) => {
         setMessage(res.message);
-        setTimeout(() => setMessage(""), 1500);
-        setUpdstePage(!updatePage);
+        setTimeout(() => setMessage(""), 1000);
+        onGetDataWriter();
       })
       .catch((e) => console.log(e));
   };
 
   return (
     <div>
-      <h1>Create your article</h1>
-
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <input
-          autoComplete="off"
-          name="title"
-          placeholder="Enter your title"
-          ref={register({ required: true })}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-evenly",
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <Form
+          onCreateArticle={onCreateArticle}
+          removeTheseArticles={removeTheseArticles}
         />
-        {errors.title && (
-          <div>
-            <span>Title is required</span>
-          </div>
-        )}
 
-        <input
-          autoComplete="off"
-          name="description"
-          placeholder="Enter your description"
-          ref={register({ required: true })}
-        />
-        {errors.description && (
-          <div>
-            <span>Description is required</span>
-          </div>
-        )}
-
-        <div className="submit__container">
-          <input className="btn__register" type="submit" value="Create" />
-        </div>
-      </form>
+        <MyProfile {...data} removeMyProfile={removeMyProfile} />
+      </div>
 
       {message && <h1 className="message">{message}</h1>}
 
-      <ArticlesList state={state} deleteThisArticle={deleteThisArticle} />
-
-      <div onClick={() => deleteTheseArticles()} style={{ cursor: "pointer" }}>
-        Delete all my articles
-      </div>
+      <List
+        state={state}
+        onSetActive={onSetActive}
+        removeThisArticle={removeThisArticle}
+        editThisArticle={editThisArticle}
+        editArticle={editArticle}
+        updateThisArticle={updateThisArticle}
+        closeThisArticle={closeThisArticle}
+        onChangeFieldsEditArticle={onChangeFieldsEditArticle}
+      />
     </div>
   );
 }

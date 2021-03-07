@@ -15,7 +15,11 @@ function App() {
 
   useEffect(() => {
     if (!authorized) return setAccess(false);
+    onCheckAuthorized();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authorized]);
 
+  const onCheckAuthorized = () => {
     RequestApi.get("/auth/check", authorized.userToken)
       .then((res) => {
         setAccess(res.status);
@@ -26,7 +30,7 @@ function App() {
         );
       })
       .catch((e) => console.log(e));
-  }, [authorized]);
+  };
 
   return (
     <Context.Provider value={{ setAuthorized }}>
